@@ -64,7 +64,7 @@ jobs:
             echo "PUBLIC_DNS=$PUBLIC_DNS" >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:RsBvAqIjkXlS3NIbrnJhw2YuCOkExnoNcEbIPtMpiB4"  # Replace with your actual SSH key fingerprint
+            - "f2:f4:62:26:9d:18:37:39:f4:e0:83:50:05:eb:33:96:71:b4:76:b8"  # Replace with your actual SSH key fingerprint
       - run:
           name: Wait for EC2 to be ready
           command: |
