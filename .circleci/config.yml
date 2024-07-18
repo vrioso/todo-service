@@ -22,6 +22,9 @@ jobs:
       - restore_cache:
           key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
       - run:
+          name: List Directory Before Build
+          command: ls -la
+      - run:
           name: Run Maven Verify
           command: mvn verify
       - run:
