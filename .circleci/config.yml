@@ -66,13 +66,10 @@ jobs:
             echo "Waiting for EC2 instance to be ready..."
             sleep 15
       - run:
-          name: List Target Directory
-          command: ls -la target
-      - run:
           name: Deploy Java Application
           command: |
             scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
-            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo yum install java-17-amazon-corretto -y && java -jar ~/toDoService-0.0.1-SNAPSHOT.jar"
+            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo yum install java-17-amazon-corretto -y && nohup java -jar ~/toDoService-0.0.1-SNAPSHOT.jar > ~/application.log 2>&1 &"
 
 workflows:
   build-and-deploy:
