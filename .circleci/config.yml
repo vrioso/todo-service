@@ -53,11 +53,14 @@ jobs:
             PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].PublicDnsName" --output text)
             echo "EC2 Public DNS: $PUBLIC_DNS"
             echo "PUBLIC_DNS=$PUBLIC_DNS" >> $BASH_ENV
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:RsBvAqIjkXlS3NIbrnJhw2YuCOkExnoNcEbIPtMpiB4"  # Replace with your actual SSH key fingerprint
       - run:
           name: Deploy Java Application
           command: |
-            scp -o StrictHostKeyChecking=no -i ~/jaeEC2.pem target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
-            ssh -o StrictHostKeyChecking=no -i ~/jaeEC2.pem ec2-user@$PUBLIC_DNS "sudo amazon-linux-extras install -y java-openjdk17 && java -jar ~/toDoService-0.0.1-SNAPSHOT.jar"
+            scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
+            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo amazon-linux-extras install -y java-openjdk17 && java -jar ~/toDoService-0.0.1-SNAPSHOT.jar"
 
 workflows:
   build-and-test:
