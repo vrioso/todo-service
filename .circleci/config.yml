@@ -71,6 +71,9 @@ jobs:
             echo "Waiting for EC2 instance to be ready..."
             sleep 15
       - run:
+          name: List Target Directory
+          command: ls -la target
+      - run:
           name: Deploy Java Application
           command: |
             scp -o StrictHostKeyChecking=no ~/project/target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
