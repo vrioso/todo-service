@@ -73,8 +73,8 @@ jobs:
       - run:
           name: Deploy Java Application
           command: |
-            scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
-            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo amazon-linux-extras install -y java-openjdk17 && java -jar ~/toDoService-0.0.1-SNAPSHOT.jar"
+            scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/target/toDoService-0.0.1-SNAPSHOT.jar
+            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo amazon-linux-extras install -y java-openjdk17 && java -jar ~/target/toDoService-0.0.1-SNAPSHOT.jar"
 
 workflows:
   build-and-test:
