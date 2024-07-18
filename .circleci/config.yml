@@ -1,6 +1,13 @@
-# This config was automatically generated from your source code
-# Stacks detected: deps:java:.
 version: 2.1
+
+executors:
+  aws-cli-executor:
+    docker:
+      - image: cimg/openjdk:17.0
+    working_directory: ~/repo
+    environment:
+      AWS_DEFAULT_REGION: "us-east-1"
+
 jobs:
   test-java:
     docker:
@@ -22,19 +29,35 @@ jobs:
           key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
           paths:
             - ~/.m2/repository
+
   deploy:
-    # This is an example deploy job, not actually used by the workflow
-    docker:
-      - image: cimg/base:stable
+    executor: aws-cli-executor
     steps:
-      # Replace this with steps to deploy to users
+      - checkout
       - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
+          name: Install AWS CLI
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y awscli
+      - run:
+          name: Create EC2 Instance
+          command: |
+            INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b72821e2f351e396 --count 1 --instance-type t2.micro --key-name jaeEC2 --security-group-ids sgr-0ba4a5c7ca0f1062f --subnet-id subnet-0e12a2175faa8a6dd --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=CircleCI-Instance}]' --query 'Instances[0].InstanceId' --output text)
+            echo "EC2 Instance ID: $INSTANCE_ID"
+            aws ec2 wait instance-status-ok --instance-ids $INSTANCE_ID
+            PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicDnsName' --output text)
+            echo "EC2 Public DNS: $PUBLIC_DNS"
+            echo "PUBLIC_DNS=$PUBLIC_DNS" >> $BASH_ENV
+      - run:
+          name: Deploy Java Application
+          command: |
+            scp -o StrictHostKeyChecking=no -i ~/jaeEC2.pem target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
+            ssh -o StrictHostKeyChecking=no -i ~/jaeEC2.pem ec2-user@$PUBLIC_DNS "sudo amazon-linux-extras install -y java-openjdk17 && java -jar ~/toDoService-0.0.1-SNAPSHOT.jar"
+
 workflows:
   build-and-test:
     jobs:
       - test-java
-    # - deploy:
-    #     requires:
-    #       - test-java
+      - deploy:
+          requires:
+            - test-java
