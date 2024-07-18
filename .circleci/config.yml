@@ -66,6 +66,11 @@ jobs:
           fingerprints:
             - "SHA256:RsBvAqIjkXlS3NIbrnJhw2YuCOkExnoNcEbIPtMpiB4"  # Replace with your actual SSH key fingerprint
       - run:
+          name: Wait for EC2 to be ready
+          command: |
+            echo "Waiting for EC2 instance to be ready..."
+            sleep 15
+      - run:
           name: Deploy Java Application
           command: |
             scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
