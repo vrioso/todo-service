@@ -4,12 +4,12 @@ executors:
   aws-cli-executor:
     docker:
       - image: cimg/openjdk:17.0
-    working_directory: ~/project  # Ensure working directory is set correctly
+    working_directory: ~/repo
     environment:
       AWS_DEFAULT_REGION: "us-east-1"
 
 jobs:
-  test-java:
+  build-and-deploy:
     docker:
       - image: cimg/openjdk:17.0
     steps:
@@ -33,11 +33,6 @@ jobs:
           key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
           paths:
             - ~/.m2/repository
-
-  deploy:
-    executor: aws-cli-executor
-    steps:
-      - checkout
       - run:
           name: Install AWS CLI
           command: |
@@ -76,13 +71,10 @@ jobs:
       - run:
           name: Deploy Java Application
           command: |
-            scp -o StrictHostKeyChecking=no ~/project/target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
+            scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
             ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo amazon-linux-extras install -y java-openjdk17 && java -jar ~/toDoService-0.0.1-SNAPSHOT.jar"
 
 workflows:
-  build-and-test:
+  build-and-deploy:
     jobs:
-      - test-java
-      - deploy:
-          requires:
-            - test-java
+      - build-and-deploy
