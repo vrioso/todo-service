@@ -71,8 +71,17 @@ jobs:
       - run:
           name: Deploy Java Application
           command: |
-            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo apt-get update && sudo apt-get install -y openjdk-17-jdk && java -jar ~/toDoService-0.0.1-SNAPSHOT.jar"
             scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
+            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS << 'EOF'
+              if [ -f /etc/debian_version ]; then
+                sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
+              elif [ -f /etc/redhat-release ]; then
+                sudo yum update && sudo yum install -y java-17-openjdk
+              elif [ -f /etc/amazon-linux-release ]; then
+                sudo amazon-linux-extras install -y java-openjdk17
+              fi
+              java -jar ~/toDoService-0.0.1-SNAPSHOT.jar
+            EOF
 
 workflows:
   build-and-deploy:
