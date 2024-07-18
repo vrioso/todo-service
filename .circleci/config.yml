@@ -40,6 +40,11 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y awscli
       - run:
+          name: Delete Existing CloudFormation Stack
+          command: |
+            aws cloudformation delete-stack --stack-name my-ec2-stack
+            aws cloudformation wait stack-delete-complete --stack-name my-ec2-stack
+      - run:
           name: Deploy CloudFormation Stack
           command: |
             aws cloudformation deploy \
