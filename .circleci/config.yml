@@ -22,7 +22,11 @@ jobs:
       - restore_cache:
           key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
       - run:
+          name: Run Maven Verify
           command: mvn verify
+      - run:
+          name: List Target Directory
+          command: ls -la target
       - store_test_results:
           path: target/surefire-reports
       - save_cache:
