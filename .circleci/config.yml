@@ -40,12 +40,17 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y awscli
       - run:
-          name: Create EC2 Instance
+          name: Deploy CloudFormation Stack
           command: |
-            INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b72821e2f351e396 --count 1 --instance-type t2.micro --key-name jaeEC2 --security-group-ids sgr-0ba4a5c7ca0f1062f --subnet-id subnet-0e12a2175faa8a6dd --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=CircleCI-Instance}]' --query 'Instances[0].InstanceId' --output text)
-            echo "EC2 Instance ID: $INSTANCE_ID"
-            aws ec2 wait instance-status-ok --instance-ids $INSTANCE_ID
-            PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicDnsName' --output text)
+            aws cloudformation deploy \
+              --template-file ec2-instance.yaml \
+              --stack-name my-ec2-stack \
+              --capabilities CAPABILITY_NAMED_IAM
+      - run:
+          name: Get EC2 Public DNS
+          command: |
+            INSTANCE_ID=$(aws cloudformation describe-stack-resources --stack-name my-ec2-stack --query "StackResources[?LogicalResourceId=='MyEC2Instance'].PhysicalResourceId" --output text)
+            PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].PublicDnsName" --output text)
             echo "EC2 Public DNS: $PUBLIC_DNS"
             echo "PUBLIC_DNS=$PUBLIC_DNS" >> $BASH_ENV
       - run:

@@ -1,22 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Resources:
-  MyEC2Instance:
-    Type: 'AWS::EC2::Instance'
-    Properties:
-      InstanceType: t2.micro
-      ImageId: ami-0b72821e2f351e396  # Replace with the desired AMI ID
-      KeyName: jaeEC2               # Replace with your key pair name
-      SecurityGroupIds:
-        - sgr-0ba4a5c7ca0f1062f      # Replace with your security group ID
-      SubnetId: subnet-0e12a2175faa8a6dd # Replace with your subnet ID
-      Tags:
-        - Key: Name
-          Value: CircleCI-Instance
-
   MySecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupDescription: Allow SSH and HTTP
+      VpcId: vpc-0b4bc09e8cabfa126  # Replace with your VPC ID
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -26,3 +14,16 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+
+  MyEC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0b72821e2f351e396  # Replace with the desired AMI ID
+      KeyName: jaeEC2                 # Replace with your key pair name
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      SubnetId: subnet-0e12a2175faa8a6dd  # Replace with your subnet ID
+      Tags:
+        - Key: Name
+          Value: CircleCI-Instance
