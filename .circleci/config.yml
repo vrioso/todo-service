@@ -33,6 +33,12 @@ jobs:
           key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
           paths:
             - ~/.m2/repository
+      - setup_remote_docker:
+          version: 20.10.7
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t to-do-service:latest .
       - run:
           name: Install AWS CLI
           command: |
@@ -66,10 +72,15 @@ jobs:
             echo "Waiting for EC2 instance to be ready..."
             sleep 15
       - run:
-          name: Deploy Java Application
+          name: Install Docker and Docker Compose on EC2
           command: |
-            scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/toDoService-0.0.1-SNAPSHOT.jar
-            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo yum install java-17-amazon-corretto -y && nohup java -jar ~/toDoService-0.0.1-SNAPSHOT.jar > 2>&1 &"
+            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo usermod -a -G docker ec2-user && sudo curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose"
+      - run:
+          name: Deploy Java Application using Docker Compose
+          command: |
+            scp -o StrictHostKeyChecking=no docker-compose.yml ec2-user@$PUBLIC_DNS:~/docker-compose.yml
+            scp -o StrictHostKeyChecking=no target/toDoService-0.0.1-SNAPSHOT.jar ec2-user@$PUBLIC_DNS:~/target/toDoService-0.0.1-SNAPSHOT.jar
+            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "docker-compose -f ~/docker-compose.yml up -d"
 
 workflows:
   build-and-deploy:
