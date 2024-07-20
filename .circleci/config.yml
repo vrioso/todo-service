@@ -86,7 +86,7 @@ jobs:
           name: Deploy Docker Image
           command: |
             scp -o StrictHostKeyChecking=no to-do-service.tar ec2-user@$PUBLIC_DNS:~/to-do-service.tar
-            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "docker load -i ~/to-do-service.tar && docker run -d -p 8080:8080 to-do-service:latest"
+            ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "docker load -i ~/to-do-service.tar && docker run -d -p 8080:8080 -e MY_SECRET_TOKEN=$MY_SECRET_TOKEN to-do-service:latest"
       - run:
           name: Update Route 53 Record
           command: |
