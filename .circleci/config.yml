@@ -65,8 +65,10 @@ jobs:
           command: |
             INSTANCE_ID=$(aws cloudformation describe-stack-resources --stack-name my-ec2-stack --query "StackResources[?LogicalResourceId=='MyEC2Instance'].PhysicalResourceId" --output text)
             PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].PublicDnsName" --output text)
+            PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
             echo "EC2 Public DNS: $PUBLIC_DNS"
             echo "PUBLIC_DNS=$PUBLIC_DNS" >> $BASH_ENV
+            echo "PUBLIC_IP=$PUBLIC_IP" >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
             - "f2:f4:62:26:9d:18:37:39:f4:e0:83:50:05:eb:33:96:71:b4:76:b8"  # Replace with your actual SSH key fingerprint
@@ -84,6 +86,23 @@ jobs:
           command: |
             scp -o StrictHostKeyChecking=no to-do-service.tar ec2-user@$PUBLIC_DNS:~/to-do-service.tar
             ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_DNS "docker load -i ~/to-do-service.tar && docker run -d -p 8080:8080 to-do-service:latest"
+      - run:
+          name: Update Route 53 Record
+          command: |
+            ZONE_ID=Z08421263BR5DFSY38QRR
+            RECORD_NAME=todoservice.vrios.net
+            aws route53 change-resource-record-sets --hosted-zone-id $ZONE_ID --change-batch '
+            {
+              "Changes": [{
+                "Action": "UPSERT",
+                "ResourceRecordSet": {
+                  "Name": "'"$RECORD_NAME"'",
+                  "Type": "A",
+                  "TTL": 300,
+                  "ResourceRecords": [{"Value": "'"$PUBLIC_IP"'"}]
+                }
+              }]
+            }'
 
 workflows:
   build-and-deploy:
